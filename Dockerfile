@@ -11,5 +11,5 @@ COPY *.go ./
 RUN go build -o /http-pull-udf
 
 EXPOSE 8080
-
-CMD [ "/http-pull-udf" ]
+#
+#CMD [ "/http-pull-udf" ]
