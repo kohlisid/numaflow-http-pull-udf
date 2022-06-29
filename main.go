@@ -3,46 +3,44 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
+	funcsdk "github.com/numaproj/numaflow-go/function"
+	"github.com/rs/zerolog/log"
 	"strings"
 	"time"
-
-	funcsdk "github.com/numaproj/numaflow-go/function"
 )
 
 const defaultURL = "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols="
+const defaultTicker = ""
+const defaultMaxWaitTime = 3
 
-//logres zap
+//zap
 func (q *queryHandler) handle(ctx context.Context, key, msg []byte) (funcsdk.Messages, error) {
-	//var url = os.Getenv("HTTP_URL")
 	baseUrl := q.url
-	const RequestMaxWaitTime = 5 * time.Second
-
-	ctx, cancel := context.WithTimeout(context.Background(), RequestMaxWaitTime)
+	requestMaxWaitTime := time.Duration(q.reqMaxWaitTime) * time.Second
+	retMes := funcsdk.MessagesBuilder()
+	ctx, cancel := context.WithTimeout(context.Background(), requestMaxWaitTime)
 	defer cancel()
-	var messageReturn []byte
+	//var messageReturn []byte
 	for _, tick := range q.tickers {
-		//Specific to current implementaion
+		//Specific to current implementation
 		url := baseUrl + tick
 		data, err := q.processHttp(ctx, url)
 		if err != nil {
-			fmt.Println("Error received %s", err)
+			log.Print("Error Received %s", err)
 		}
-		messageReturn = append(messageReturn, data...)
-		fmt.Println("DEBUG MESSAGE 5 : ", string(data), " and ", string(msg))
+		log.Print("Received for tick: %s", tick)
+		retMes = retMes.Append(funcsdk.MessageTo(tick, data))
 	}
-	return funcsdk.MessagesBuilder().Append(funcsdk.MessageToAll(messageReturn)), nil
+	return retMes, nil
 }
 
 func main() {
-	q := NewQueryHandler(1)
 	url := flag.String("url", defaultURL, "URL to Query")
-	tickers := flag.String("tickers", "", "Comma seperated ticker names")
+	tickers := flag.String("tickers", defaultTicker, "Comma seperated ticker names")
 	flag.Parse()
 	ticks := strings.Split(*tickers, ",")
+	q := NewQueryHandler(1, defaultMaxWaitTime)
 	q.url = *url
 	q.tickers = ticks
-
-	fmt.Println("DEBUG MESSAGE: ENTRY")
 	funcsdk.Start(context.Background(), q.handle)
 }

@@ -7,12 +7,13 @@ import (
 )
 
 type queryHandler struct {
-	client  *http.Client
-	url     string
-	tickers []string
+	client         *http.Client
+	url            string
+	tickers        []string
+	reqMaxWaitTime int
 }
 
-func NewQueryHandler(waitTime int) *queryHandler {
+func NewQueryHandler(waitTime int, maxWaitTime int) *queryHandler {
 	ConnectMaxWaitTime := time.Duration(waitTime) * time.Second
 
 	client := http.Client{
@@ -23,6 +24,7 @@ func NewQueryHandler(waitTime int) *queryHandler {
 		},
 	}
 	return &queryHandler{
-		client: &client,
+		client:         &client,
+		reqMaxWaitTime: maxWaitTime,
 	}
 }
