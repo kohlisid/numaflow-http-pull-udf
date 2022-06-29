@@ -9,7 +9,7 @@ Add the UDF in the pipeline YAML file
 
 in the -tickers arg, provide a comma seperated list of stocks that you wish to track!
 
-
+```
 - name: sample-udf
   udf:
     container:
@@ -17,9 +17,11 @@ in the -tickers arg, provide a comma seperated list of stocks that you wish to t
       args:
       - /http-pull-udf
       - -tickers=AAPL,AMZN
+```
 
 We would need to define the edges with conditional forwarding for each stock ticker, the keyIn should be the ticker name
 
+```
 edges:
   - from: in
     to: sample-udf
@@ -28,3 +30,4 @@ edges:
     conditions:
       keyIn:
       - AAPL
+```
